@@ -50,6 +50,32 @@ This project integrates the following INESData components:
 | **Public Portal Backend** | [inesdata-public-portal-backend](https://github.com/INESData/inesdata-public-portal-backend) | Backend services for portal functionality |
 | **Registration Service** | [inesdata-registration-service](https://github.com/INESData/inesdata-registration-service) | Connector registration and management |
 
+## 💡 Visual Walkthrough: Tabular Data to Vision Models
+
+The Streamlit application demonstrates an end-to-end AI workflow. Below is the step-by-step process captured from the application interface.
+
+### 1. Authentication
+Secure login via Keycloak using consumer connector credentials. The app manages OAuth2 tokens for all subsequent requests.
+![Authentication Screen](docs/images/1_authentication.png)
+
+### 2. Catalog Discovery
+Browse the federated catalog to discover available datasets exposed by the Provider Connector.
+![Catalog Browser](docs/images/2_catalog_browser.png)
+
+### 3. Contract Negotiation
+View detailed metadata and negotiate usage contracts automatically. The system handles policy evaluation before access is granted.
+![Dataset Details](docs/images/3_dataset_details.png)
+
+### 4. Secure Data Transfer
+Once the contract is agreed upon, the dataset (CSV) is securely transferred via EDC protocols and saved locally.
+![Downloaded Datasets](docs/images/4_data_transfer.png)
+
+### 5. AI Image Synthesis (TINTOlib)
+The tabular data is processed using **TINTOlib** to generate synthetic images. These images represent the feature space of the data, making them ready for training Convolutional Neural Networks (CNNs) or Vision Transformers. The images can then be downloaded as a zip.
+![Synthetic Image Generation](docs/images/5_synthetic_generation.png)
+
+---
+
 ## 🚀 Quick Start
 
 ### Prerequisites
