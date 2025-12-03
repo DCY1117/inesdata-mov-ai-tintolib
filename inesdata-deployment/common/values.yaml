@@ -1,0 +1,63 @@
+postgresql:
+  auth:
+    postgresPassword: xxxxCHANGEMExxxx
+    # We initially setup the database for keycloak
+    username: keycloak
+    password: xxxxCHANGEMExxxx
+    database: keycloak
+keycloak:
+  auth:
+    username: admin
+    password: inesdata
+  postgresql:
+    enabled: false
+  externalDatabase:
+    host: "{{ .Release.Name }}-postgresql"
+    user: keycloak
+    password: xxxxCHANGEMExxxx
+    database: keycloak
+    port: 5432
+  ingress:
+    enabled: true
+    hostname: keycloak.dev.ed.inesdata.upm
+  adminIngress:
+    enabled: true
+    hostname: keycloak-admin.dev.ed.inesdata.upm
+  keycloakConfigCli:
+    enabled: true
+    configuration:
+      master.json: |
+        {
+          "realm" : "master",
+          "attributes": {
+            "frontendUrl": "http://keycloak-admin.dev.ed.inesdata.upm"
+          }
+        }
+minio:
+  mode: standalone
+  rootUser: admin
+  rootPassword: xxxxCHANGEMExxxx
+  replicas: 1
+  persistence:
+    size: 100Gi
+  ingress:
+    enabled: true
+    hosts:
+      - minio.dev.ed.inesdata.upm
+  consoleIngress:
+    enabled: true
+    hosts:
+      - console.minio-s3.dev.ed.inesdata.upm
+  resources:
+    requests:
+      memory: 2Gi
+vault:
+  serviceAccount:
+    create: true
+    name: vault
+  persistence:
+    enabled: true
+    size: 10Gi
+    storageClass: standard
+  injector:
+    enabled: false

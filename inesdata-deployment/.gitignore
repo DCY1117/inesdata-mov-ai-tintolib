@@ -1,0 +1,9 @@
+*/charts/*.tgz
+.venv/
+legacy/
+deployments/
+connector/keys/
+connector/envs/
+dataspace/envs/
+common/envs/
+deployer.config

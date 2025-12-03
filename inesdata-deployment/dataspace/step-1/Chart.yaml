@@ -1,0 +1,4 @@
+apiVersion: v2
+name: dataspace-step-1
+description: Deploy Registration Service
+version: 0.1.0
