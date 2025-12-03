@@ -251,7 +251,7 @@ streamlit run app.py
 ```
 
 ### **2. Login**
-- Default credentials: `user-conn-oeg-consumer` / `vCV!otahBte*!c@9`
+- Credentials: Obtain from system administrator
 - Realm: `demo`
 - Keycloak endpoint: `http://192.168.49.2:30580`
 

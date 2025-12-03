@@ -26,7 +26,7 @@ pip install numpy pandas scikit-learn matplotlib Pillow seaborn streamlit reques
 streamlit run app.py
 ```
 
-**Default Login**: `user-conn-oeg-consumer` / `vCV!otahBte*!c@9`
+**Login**: Use credentials provided by your administrator
 
 ---
 
