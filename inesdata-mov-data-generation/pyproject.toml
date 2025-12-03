@@ -1,0 +1,102 @@
+[build-system]
+requires = ["setuptools==67.7.2"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "inesdata-mov-datasets"
+dynamic = ["version", "dependencies"]
+requires-python = ">=3.10"
+description = "inesdata-mov"
+authors = [{ name = "" }] 
+classifiers = [
+  "Programming Language :: Python",
+  "Programming Language :: Python :: 3",
+  "Programming Language :: Python :: 3 :: Only",
+  "Programming Language :: Python :: 3.10",
+  "Programming Language :: Python :: 3.11",
+  "Topic :: Software Development",
+  "Topic :: Software Development :: Libraries",
+  "Topic :: Software Development :: Libraries :: Python Modules",
+]
+
+#[project.urls]
+#repository = "" TODO: add project url
+
+[tool.setuptools.dynamic]
+version = { attr = "inesdata_mov_datasets.__version__" }
+dependencies = { file = "requirements/requirements.txt" }
+
+[tool.setuptools.packages.find]
+include = ["inesdata_mov_datasets", "inesdata_mov_datasets.*"]
+namespaces = false
+
+[tool.pytest.ini_options]
+filterwarnings = "ignore::DeprecationWarning"
+addopts = "-v"
+testpaths = ["tests", "integration"]
+
+[tool.isort]
+multi_line_output = 3
+include_trailing_comma = true
+force_grid_wrap = 0
+use_parentheses = true
+line_length = 99
+profile = "black"
+
+[tool.black]
+line-length = 99
+include = '\.pyi?$'
+exclude = '''
+/(
+    \.git
+  | \.hg
+  | \.mypy_cache
+  | \.tox
+  | \.venv
+  | _build
+  | buck-out
+  | build
+  | dist
+  | sonar-project.properties
+)/
+'''
+
+[tool.ruff]
+lint.select = ["E", "F"]
+line-length = 99
+exclude = [
+  ".bzr",
+  ".direnv",
+  ".eggs",
+  ".git",
+  ".hg",
+  ".mypy_cache",
+  ".nox",
+  ".pants.d",
+  ".pytype",
+  ".ruff_cache",
+  ".svn",
+  ".tox",
+  ".venv",
+  "__pypackages__",
+  "_build",
+  "buck-out",
+  "build",
+  "dist",
+  "node_modules",
+  "venv",
+]
+lint.ignore = [
+  "E501", # Line too long, handled by black
+]
+lint.ignore-init-module-imports = true
+
+[tool.ruff.lint.mccabe]
+max-complexity = 10
+
+[tool.pydocstyle]
+convention = "google"
+add-ignore = [
+  "D100", # Missing docstring in public module
+  "D104", # Missing docstring in public package
+]

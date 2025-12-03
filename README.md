@@ -245,3 +245,7 @@ This project follows the licensing of its component repositories. Please refer t
 ---
 
 **Note**: This is a demonstration environment for local development and testing. For production deployments, refer to the official INESData deployment documentation.
+
+# Disclaimer
+
+Este trabajo ha recibido financiación del proyecto INESData (Infraestructura para la INvestigación de ESpacios de DAtos distribuidos en UPM), un proyecto financiado en el contexto de la convocatoria UNICO I+D CLOUD del Ministerio para la Transformación Digital y de la Función Pública en el marco del PRTR financiado por Unión Europea (NextGenerationEU)

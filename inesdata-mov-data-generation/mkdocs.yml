@@ -1,0 +1,48 @@
+site_name: "INESDATA_MOV"
+site_url: http://localhost
+site_description: Data Generation
+site_author: GMV
+
+repo_url: https://github.com/oeg-upm/inesdata-mov-data-generation
+
+theme:
+  name: material
+  locale: es
+  highlightjs: true
+  hljs_languages:
+    - python
+  features:
+    - tabs
+    - navigation.instant
+    - content.code.copy
+
+markdown_extensions:
+  - attr_list
+  - md_in_html
+  - admonition
+  - pymdownx.details
+  - pymdownx.superfences
+  - pymdownx.snippets:
+      check_paths: true
+  - pymdownx.emoji:
+      emoji_index: !!python/name:material.extensions.emoji.twemoji
+      emoji_generator: !!python/name:material.extensions.emoji.to_svg
+
+plugins:
+    - mkdocs-jupyter
+
+nav:
+  - 🏠 Home: index.md
+  - ✅ Calidad:
+    - 🚌 EMT:
+      - Análisis de calidad:  notebooks/emt_qa.ipynb
+      - Profile ↗: qa/emt_report.html" target="_blank
+      - Análisis EDA: notebooks/eda/emt_eda.ipynb
+    - 🌥️ AEMET:
+      - Análisis de calidad:  notebooks/aemet_qa.ipynb
+      - Profile ↗: qa/aemet_report.html" target="_blank
+      - Análisis EDA: notebooks/eda/aemet_eda.ipynb
+    - 🚦 INFORMO:
+      - Análisis de calidad:  notebooks/informo_qa.ipynb
+      - Profile ↗: qa/informo_report.html" target="_blank
+      - Análisis EDA: notebooks/eda/informo_eda.ipynb

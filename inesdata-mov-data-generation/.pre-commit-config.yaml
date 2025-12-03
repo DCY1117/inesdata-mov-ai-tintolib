@@ -1,0 +1,69 @@
+repos:
+  - repo: https://github.com/pre-commit/pre-commit-hooks
+    rev: v4.3.0
+    hooks:
+      - id: check-builtin-literals
+      - id: check-case-conflict
+      - id: check-docstring-first
+      - id: check-merge-conflict
+      - id: check-toml
+      - id: check-yaml
+      - id: debug-statements
+      - id: trailing-whitespace
+      - id: name-tests-test
+        args:
+          - --pytest-test-first
+      - id: requirements-txt-fixer
+        name: requirements 
+        args:
+          - requirements/requirements.in
+          - requirements/requirements_dev.in
+
+
+  - repo: https://github.com/pycqa/isort
+    rev: 5.13.2 # must match requirements_dev.in
+    hooks:
+      - id: isort
+        name: isort
+        files: inesdata_mov_datasets/
+        args: [--sp=pyproject.toml]
+
+
+  - repo: https://github.com/psf/black
+    rev: 23.3.0 # must match requirements_dev.in
+    hooks:
+      - id: black
+        name: isort ->
+        files: inesdata_mov_datasets/
+        args: [--config=pyproject.toml]
+
+
+  - repo: https://github.com/pycqa/pydocstyle
+    rev: 6.3.0 # must match requirements_dev.in
+    hooks:
+      - id: pydocstyle
+        name: pydocstyle
+        files: inesdata_mov_datasets/
+        args: [--config=pyproject.toml]
+
+
+  - repo: https://github.com/charliermarsh/ruff-pre-commit
+    rev: v0.2.1 # must match requirements_dev.in
+    hooks:
+      - id: ruff
+        args:
+          - --fix
+
+  - repo: https://github.com/nbQA-dev/nbQA
+    rev: 1.7.1
+    hooks:
+      - id: nbqa-black
+        args: [--nbqa-mutate]
+      - id: nbqa-isort
+        args: [--nbqa-mutate]
+
+  - repo: https://gitlab.com/bmares/check-json5
+    rev: v1.0.0
+    hooks:
+    - id: check-json5
+
