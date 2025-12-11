@@ -1,42 +1,57 @@
-# INESData Local Deployment with AI Vision Models Integration
+# INESData Dataspace: AI-Powered Data Services with Policy-Compliant Data Exchange
 
 [![INESData](https://img.shields.io/badge/INESData-Dataspace-blue)](https://github.com/INESData)
 [![Python](https://img.shields.io/badge/Python-3.10+-green.svg)](https://www.python.org/downloads/)
 [![Streamlit](https://img.shields.io/badge/Streamlit-App-red.svg)](https://streamlit.io/)
 [![TINTOlib](https://img.shields.io/badge/TINTOlib-ML-orange.svg)](https://github.com/oeg-upm/TINTOlib)
+[![EDC](https://img.shields.io/badge/EDC-Connector-purple.svg)](https://github.com/eclipse-edc/connector)
 
-A comprehensive demonstration of **INESData dataspace** deployment showcasing an AI-powered application that transforms tabular datasets into synthetic images for computer vision models using **TINTOlib**.
+A comprehensive demonstration of building **data services integrated with an INESData dataspace** using the **EMT (Estación de Monitoreo de Tráfico) dataset** as a real-world example. This project showcases how to create intelligent services that automatically consume policy-compliant data from a distributed dataspace.
 
 ## 🎯 Overview
 
-This repository demonstrates a complete dataspace ecosystem with:
-- **Local deployment** of INESData components (provider and consumer connectors)
-- **Streamlit application** for dataspace interaction and automated workflows
-- **AI/ML integration** using TINTOlib to convert tabular data into images for vision models
-- End-to-end data exchange with authentication, catalog browsing, contract negotiation, and data transfer
+This repository demonstrates a **complete dataspace-driven service architecture** with:
+- **Data Service Pattern**: A Streamlit application acting as a dataspace-connected service that consumes data through connectors
+- **Policy-Compliant Data Access**: Automatic authentication, contract negotiation, and data transfer respecting dataspace policies
+- **Real-World EMT Dataset**: Using EMT traffic monitoring data generated via [inesdata-mov-data-generation](https://github.com/INESData/inesdata-mov-data-generation)
+- **AI/ML Integration**: TINTOlib transforms tabular EMT data into synthetic images for computer vision models
+- **Connector-Based Integration**: Provider and Consumer EDC connectors managing secure data exchange
+- **Automated Workflows**: End-to-end pipelines from data discovery → policy evaluation → transfer → processing
 
-## 🏗️ Architecture
+## 🏗️ Architecture: Data Service Connected to Dataspace
 
 ```
-┌─────────────────────────────────────────────────────────────┐
-│                    INESData Dataspace                        │
-├─────────────────┬──────────────────┬────────────────────────┤
-│  Provider       │   Keycloak       │   Consumer             │
-│  Connector      │   Auth Server    │   Connector            │
-└────────┬────────┴────────┬─────────┴───────┬────────────────┘
-         │                 │                 │
-         └─────────────────┼─────────────────┘
-                           │
-                  ┌────────▼────────┐
-                  │   Streamlit     │
-                  │   Application   │
-                  └────────┬────────┘
-                           │
-                  ┌────────▼────────┐
-                  │    TINTOlib     │
-                  │  Image Synthesis│
-                  └─────────────────┘
+┌────────────────────────────────────────────────────────────────────┐
+│                      INESData Dataspace                             │
+├──────────────┬────────────────────────┬─────────────────────────────┤
+│  Provider    │   Central Authority    │   Consumer Connector        │
+│  Connector   │   (Keycloak, Catalog)  │   (Our Service Access)      │
+├──────────────┴────────────────────────┴─────────────────────────────┤
+│                                                                      │
+│  ┌──────────────────────────────────────────────────────────────┐  │
+│  │           Policy Framework (Contract Negotiation)            │  │
+│  │  • Usage policies • Data sovereignty • Access control        │  │
+│  └──────────────────────────────────────────────────────────────┘  │
+│                                                                      │
+└──────────────────────────────────────────────────────────────────────┘
+                                 │
+                                 │ (Policy-compliant data exchange)
+                                 │
+                    ┌────────────▼────────────┐
+                    │  Streamlit Data Service │
+                    │  (Consumer Application) │
+                    └────────────┬────────────┘
+                                 │
+                 ┌───────────────┬┴─────────────────┐
+                 │               │                 │
+        ┌────────▼────────┐ ┌───▼─────┐ ┌────────▼────────┐
+        │  EMT Data from  │ │ Contract │ │  TINTOlib AI    │
+        │  Dataspace      │ │ Manager  │ │  Synthesizer    │
+        │  (via Connector)│ │          │ │  (Vision Models)│
+        └─────────────────┘ └──────────┘ └─────────────────┘
 ```
+
+**Key Innovation**: This example demonstrates how to build **intelligent services that are consumers within a dataspace**, automatically discovering, negotiating, and accessing policy-compliant data without manual intervention.
 
 ## 📦 Components
 
@@ -50,29 +65,143 @@ This project integrates the following INESData components:
 | **Public Portal Backend** | [inesdata-public-portal-backend](https://github.com/INESData/inesdata-public-portal-backend) | Backend services for portal functionality |
 | **Registration Service** | [inesdata-registration-service](https://github.com/INESData/inesdata-registration-service) | Connector registration and management |
 
-## 💡 Visual Walkthrough: Tabular Data to Vision Models
+## 💡 Use Case: EMT Traffic Data → AI Vision Models
 
-The Streamlit application demonstrates an end-to-end AI workflow. Below is the step-by-step process captured from the application interface.
+This project uses **EMT (Estación de Monitoreo de Tráfico) traffic monitoring data** as a real-world example of how organizations can:
 
-### 1. Authentication
-Secure login via Keycloak using consumer connector credentials. The app manages OAuth2 tokens for all subsequent requests.
+1. **Share data through dataspaces** while maintaining control via policies
+2. **Build intelligent services** that automatically consume policy-compliant data
+3. **Add value** through AI/ML transformations (synthetic image generation)
+4. **Monetize or collaborate** using dataspace frameworks
+
+### The EMT Dataset
+
+### Step 1: Data Generation (EMT Dataset)
+The workflow starts with **EMT traffic monitoring data** generated using [inesdata-mov-data-generation](https://github.com/INESData/inesdata-mov-data-generation). This dataset is exposed through the **Provider Connector** within the dataspace.
+
+**Key Point**: Any data provider can expose their datasets following dataspace standards and policies.
+
+### Step 2: Authentication & Authorization
+Secure login via Keycloak using consumer connector credentials. The app manages OAuth2 tokens for all dataspace interactions. This ensures only authorized services can access data.
+
 ![Authentication Screen](docs/images/1_authentication.png)
 
-### 2. Catalog Discovery
-Browse the federated catalog to discover available datasets exposed by the Provider Connector.
+### Step 3: Federated Catalog Discovery
+Browse the **federated catalog** to discover available datasets exposed by any Provider Connector. The service automatically discovers the EMT dataset and other available resources.
+
 ![Catalog Browser](docs/images/2_catalog_browser.png)
 
-### 3. Contract Negotiation
-View detailed metadata and negotiate usage contracts automatically. The system handles policy evaluation before access is granted.
+**Pattern**: This demonstrates how services can **automatically discover and catalog available data** without manual configuration.
+
+### Step 4: Policy-Aware Contract Negotiation
+View detailed metadata and **automatically negotiate usage contracts**. The system evaluates data access policies:
+- Who can access the data?
+- How can the data be used?
+- What processing is allowed?
+- Are there time/usage restrictions?
+
+The contract is negotiated programmatically before access is granted.
+
 ![Dataset Details](docs/images/3_dataset_details.png)
 
-### 4. Secure Data Transfer
-Once the contract is agreed upon, the dataset (CSV) is securely transferred via EDC protocols and saved locally.
+**Innovation**: Policies are evaluated automatically, enabling services to **respect data sovereignty** without manual approval workflows.
+
+### Step 5: Secure Policy-Compliant Data Transfer
+Once the contract is agreed upon, the **EMT dataset (CSV) is securely transferred via EDC protocols**. The system ensures:
+- Only authorized services receive the data
+- Transfer is encrypted and traceable
+- Access is logged and auditable
+- Policies continue to apply to the received data
+
 ![Downloaded Datasets](docs/images/4_data_transfer.png)
 
-### 5. AI Image Synthesis (TINTOlib)
-The tabular data is processed using **TINTOlib** to generate synthetic images. These images represent the feature space of the data, making them ready for training Convolutional Neural Networks (CNNs) or Vision Transformers. The images can then be downloaded as a zip.
+### Step 6: AI-Powered Data Processing with TINTOlib
+The tabular EMT data is processed using **TINTOlib** to generate synthetic images. This demonstrates **adding value through AI while respecting data policies**:
+
+- **Input**: Tabular EMT traffic metrics (vehicle counts, speeds, congestion patterns, etc.)
+- **Process**: TINTOlib converts features to synthetic images representing the feature space
+- **Output**: High-dimensional images ready for CNNs, Vision Transformers, or other deep learning models
+
 ![Synthetic Image Generation](docs/images/5_synthetic_generation.png)
+
+### Step 7: Generated Vision Dataset Ready for ML
+The synthetic images represent the complete feature space of the EMT data, enabling training of computer vision models.
+
+![Synthetic Images Output](docs/images/6_synthetic_images.png)
+
+**Business Value**: Organizations can:
+- Train vision models on private data without sharing raw records
+- Create new data products (synthetic images) from shared data
+- Maintain compliance with data policies throughout the process
+- Build AI services that rely on dataspace-sourced data
+
+---
+
+---
+
+## 🔧 Building Data Services Connected to Dataspaces: The Pattern
+
+This project exemplifies a **reusable service architecture pattern** for dataspace-integrated applications. Here's how to build similar services:
+
+### Service Integration Pattern
+
+```python
+# Your Data Service Architecture
+┌─────────────────────────────────────────────────────────────┐
+│         Your Intelligent Data Service                        │
+├─────────────────────────────────────────────────────────────┤
+│                                                               │
+│  1. Service Bootstrap & Config                               │
+│     └─ Initialize consumer connector credentials             │
+│     └─ Load dataspace catalog endpoint                       │
+│                                                               │
+│  2. Data Discovery Module                                    │
+│     └─ Query federated catalog (async)                       │
+│     └─ Filter datasets by metadata/domain                    │
+│     └─ Parse available contracts & policies                  │
+│                                                               │
+│  3. Policy Evaluation Engine                                 │
+│     └─ Check data access policies automatically              │
+│     └─ Verify service compliance requirements                │
+│     └─ Negotiate contracts programmatically                  │
+│                                                               │
+│  4. Secure Data Ingestion                                    │
+│     └─ Request data via EDC consumer connector               │
+│     └─ Manage transfer tokens & encryption                   │
+│     └─ Validate received data integrity                      │
+│                                                               │
+│  5. Business Logic & AI Processing                           │
+│     └─ Apply your domain logic (TINTOlib in this example)    │
+│     └─ Add value while respecting data policies              │
+│     └─ Generate insights/products from dataspace data        │
+│                                                               │
+│  6. Result Management                                        │
+│     └─ Store processed outputs                               │
+│     └─ Optionally expose new datasets to dataspace           │
+│     └─ Maintain audit trail of data usage                    │
+│                                                               │
+└─────────────────────────────────────────────────────────────┘
+```
+
+### Key Capabilities Your Service Gains
+
+| Capability | Benefit |
+|-----------|---------|
+| **Automatic Data Discovery** | Services find new data sources without reconfiguration |
+| **Policy Compliance** | Access control is automatic, not manual |
+| **Secure Exchange** | EDC handles encryption, authentication, and audit logs |
+| **Scalability** | Add more data providers/consumers transparently |
+| **Interoperability** | Works with any dataspace using EDC standards |
+| **Trust & Governance** | Data sovereignty maintained throughout pipeline |
+
+### Real-World Example: This Project
+
+This repository implements exactly this pattern:
+- **Service**: Streamlit application acts as consumer service
+- **Discovery**: Queries catalog for EMT datasets
+- **Data Transfer**: Securely receives CSV from provider
+- **Processing**: Applies TINTOlib transformation
+- **Output**: Generates and manages synthetic images
 
 ---
 
@@ -89,11 +218,19 @@ The tabular data is processed using **TINTOlib** to generate synthetic images. T
 
 This repository includes comprehensive documentation for local deployment:
 
-- **📄 [Instalar-Inesdata-DEV-localmente-v2.pdf](./Instalar-Inesdata-DEV-localmente-v2.pdf)** - Complete step-by-step guide for local INESData deployment
+- **📄 [Instalar-Inesdata-DEV-localmente-v2.pdf](./Instalar-Inesdata-DEV-localmente-v2.pdf)** - Complete step-by-step guide for local INESData deployment (Spanish)
 - **📝 [deployment-guide.txt](./inesdata-deployment/deployment-guide.txt)** - Quick reference with deployment commands
-- **📋 [Guia_Despliegue_Local_INESData.docx](./Guia_Despliegue_Local_INESData.docx)** - Additional deployment documentation
+- **📋 [Guia_Despliegue_Local_INESData.docx](./Guia_Despliegue_Local_INESData.docx)** - Local deployment documentation (Spanish)
+- **📋 [INESData_MOV_Guide.docx](./INESData_MOV_Guide.docx)** - INESData Mobile data generation guide
 
 ### Deployment Steps
+
+For detailed step-by-step instructions, refer to the comprehensive deployment guides:
+
+- **[Instalar-Inesdata-DEV-localmente-v2.pdf](./Instalar-Inesdata-DEV-localmente-v2.pdf)** - Complete local deployment walkthrough with all prerequisites and configurations
+- **[Guia_Despliegue_Local_INESData.docx](./Guia_Despliegue_Local_INESData.docx)** - Additional deployment notes and troubleshooting
+
+#### Quick Reference Commands
 
 1. **Deploy common services** (PostgreSQL, MinIO, Keycloak, Vault)
    ```bash
@@ -162,14 +299,14 @@ Instead of pulling images from GitHub Container Registry (`ghcr.io/inesdata/*`),
    
    > See deployment guides for complete instructions on local image configuration
 
-## 💡 Use Case: Tabular Data to Vision Models
+## 💡 Use Case: EMT Traffic Data → AI Vision Models
 
-The Streamlit application demonstrates an AI workflow:
+The Streamlit application demonstrates an AI workflow using real EMT traffic data:
 
 1. **Authenticate** with Keycloak using consumer connector credentials
 2. **Browse** the federated catalog to discover available datasets
 3. **Negotiate** contracts automatically with the provider
-4. **Transfer** and download tabular datasets (CSV)
+4. **Transfer** and download tabular datasets (CSV) with policy compliance
 5. **Transform** data using TINTOlib into synthetic images
 6. **Generate** vision-ready datasets for CNN/transformer models
 
@@ -183,6 +320,77 @@ The Streamlit application demonstrates an AI workflow:
 - And more...
 
 This enables the use of powerful computer vision models (ResNet, Vision Transformers, etc.) on traditionally tabular datasets.
+
+## 📚 How to Build Your Own Dataspace-Connected Service
+
+This project serves as a **template** for building intelligent services that integrate with dataspaces. Here's how to adapt it for your domain:
+
+### Step 1: Set Up Dataspace Access
+1. **Configure connector credentials** in your service configuration
+2. **Implement authentication** using Keycloak or your identity provider
+3. **Initialize the EDC Management API client** to interact with the consumer connector
+
+### Step 2: Implement Data Discovery
+```python
+async def discover_relevant_data(domain: str) -> List[Dataset]:
+    """Query catalog for datasets in your domain"""
+    catalog = await connector.query_catalog(
+        filters={"domain": domain}
+    )
+    return [d for d in catalog if meets_your_criteria(d)]
+```
+
+**Options**:
+- Filter by dataset metadata (domain, format, frequency)
+- Use semantic search if catalog supports it
+- Subscribe to catalog updates for new datasets
+
+### Step 3: Add Policy Evaluation
+```python
+async def can_use_data(dataset_id: str) -> bool:
+    """Check if dataset policies allow your use case"""
+    policies = await connector.get_policies(dataset_id)
+    
+    # Evaluate against your service requirements
+    # Examples: can we train ML models? Can we redistribute?
+    return your_business_logic_accepts(policies)
+```
+
+**Policy Examples**:
+- Usage restrictions (training only, analytics only, etc.)
+- Geographic restrictions (GDPR compliance, etc.)
+- Temporal restrictions (valid until date, etc.)
+- Commercial terms (free, licensed, etc.)
+
+### Step 4: Integrate Your Business Logic
+Replace or augment the TINTOlib processing with your own:
+```python
+async def process_policy_compliant_data(data: pd.DataFrame) -> Result:
+    """Apply your AI/ML/business logic to dataspace data"""
+    # Examples:
+    # - Machine learning model inference
+    # - Data aggregation and analytics
+    # - Image/signal processing
+    # - Anomaly detection
+    # - Data enrichment
+    return await your_processing_pipeline(data)
+```
+
+### Step 5: Manage Results
+- Store processed results securely
+- Optionally expose new datasets back to the dataspace
+- Maintain audit trails of data usage and transformations
+- Log policy compliance for compliance teams
+
+### Real-World Service Examples
+
+| Service Type | Data Needed | Processing | Output |
+|--------------|-----------|-----------|--------|
+| **Traffic Analytics** | EMT data (this project) | TINTOlib → Image synthesis | Vision ML models |
+| **Predictive Maintenance** | Sensor data | ML model → Predictions | Maintenance alerts |
+| **Risk Assessment** | Financial data + Risk policies | Compliance checking | Risk scores |
+| **Healthcare Insights** | Medical records (FHIR) | Privacy-preserving ML | Patient insights |
+| **Smart City Dashboard** | Multiple IoT sources | Data fusion | Real-time visualizations |
 
 ## 📁 Repository Structure
 
