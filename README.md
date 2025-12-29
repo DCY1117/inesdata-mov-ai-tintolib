@@ -756,20 +756,6 @@ inesdata-mov-ai-tintolib/                    # 🌟 This repository
 
 ---
 
-## 🏆 Project Achievements
-
-This comprehensive project demonstrates:
-
-✅ **End-to-End Enterprise Architecture**: From deployment to AI inference  
-✅ **Policy-Driven Data Governance**: Automatic enforcement throughout pipeline  
-✅ **Production-Ready Implementation**: Complete with monitoring and logging  
-✅ **Real-World Use Case**: EMT traffic data to ML models  
-✅ **Reusable Pattern**: Template for other dataspace-integrated services  
-✅ **Multi-Technology Stack**: Java, Python, Angular, Kubernetes  
-✅ **Comprehensive Documentation**: Guides for all skill levels  
-
----
-
 ## 📄 Licensing & Acknowledgments
 
 ### Project Acknowledgments
@@ -797,19 +783,6 @@ por Unión Europea (NextGenerationEU)
 
 ---
 
-## 📞 Getting Help
-
-| Need | Resource |
-|------|----------|
-| **Deployment Issues** | [Instalar-Inesdata-DEV-localmente-v2.pdf](./Instalar-Inesdata-DEV-localmente-v2.pdf) |
-| **Quick Commands** | [deployment-guide.txt](./inesdata-deployment/deployment-guide.txt) |
-| **Component Specifics** | Check individual component READMEs |
-| **ML Integration** | [TINTOlib GitHub](https://github.com/oeg-upm/TINTOlib) |
-| **EDC Framework** | [Eclipse EDC Docs](https://github.com/eclipse-edc/connector) |
-| **Bug Reports** | Open an issue in this repository |
-
----
-
-**Last Updated**: December 2024  
+**Last Updated**: December 2025
 **Status**: Production-Ready Demonstration  
 **Compatibility**: Kubernetes 1.20+, Python 3.10+, Node.js 14+
