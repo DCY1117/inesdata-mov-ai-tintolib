@@ -5,9 +5,11 @@ data transfer, and synthetic image generation for machine learning.
 """
 import streamlit as st
 import pandas as pd
+import pickle
 from auth import KeycloakAuth
 from edc_client import EDCClient
 from tinto_processor import TINTOProcessor
+from model_trainer import ModelTrainer
 from config import KEYCLOAK_REALM
 
 # Page configuration
@@ -173,8 +175,9 @@ def login_page():
             with st.expander("ℹ️ System Information"):
                 st.markdown(f"""
                 - **Realm:** `{KEYCLOAK_REALM}`
+                - **Default User:** `user-conn-oeg-consumer`
+                - **Default Password:** `vCV!otahBte*!c@9`
                 - **Connector:** Consumer (Port 30180)
-                - **Note:** Contact your administrator for credentials
                 """)
 
 
@@ -419,6 +422,627 @@ def catalog_page():
                                 del st.session_state.transfers[ds['id']]['tinto_images']
                             st.success("Images cleared")
                             st.rerun()
+    
+    st.markdown("---")
+    
+    # ML Model Training Section
+    st.header("🤖 Machine Learning Model Training")
+    
+    ml_col1, ml_col2 = st.columns([3, 1])
+    with ml_col1:
+        st.info("Train predictive models using your downloaded datasets")
+    with ml_col2:
+        if st.button("💾 Save Model", key="save_model_btn", use_container_width=True, disabled=(not downloaded_datasets)):
+            if st.session_state.get('trained_model'):
+                model_bytes = st.session_state['trained_model'].save_model()
+                if model_bytes:
+                    st.download_button(
+                        label="📥 Download Model",
+                        data=model_bytes,
+                        file_name="trained_model.pkl",
+                        mime="application/octet-stream"
+                    )
+    
+    if downloaded_datasets:
+        with st.expander("🎯 Train Model", expanded=False):
+            # Step 1: Select Dataset
+            st.subheader("Step 1: Select Dataset")
+            selected_ds_idx = st.selectbox(
+                "Choose a dataset",
+                range(len(downloaded_datasets)),
+                format_func=lambda i: downloaded_datasets[i]['name'],
+                key="ml_dataset_select"
+            )
+            selected_ds = downloaded_datasets[selected_ds_idx]
+            
+            # Load and display data
+            trainer = ModelTrainer()
+            df = trainer.load_data(selected_ds['transfer_info']['downloaded_data'])
+            
+            if df is not None:
+                # Display data summary
+                with st.expander("📊 Data Summary", expanded=False):
+                    summary = trainer.get_data_summary(df)
+                    col1, col2, col3 = st.columns(3)
+                    with col1:
+                        st.metric("📈 Rows", summary['rows'])
+                    with col2:
+                        st.metric("📋 Columns", summary['columns'])
+                    with col3:
+                        missing_total = sum(summary['missing_values'].values())
+                        st.metric("⚠️ Missing Values", missing_total)
+                    
+                    st.markdown("**Data Preview:**")
+                    st.dataframe(df.head(10), use_container_width=True)
+                    
+                    st.markdown("**Column Information:**")
+                    col_info = pd.DataFrame({
+                        'Column': summary['column_names'],
+                        'Type': [str(t) for t in summary['dtypes'].values()],
+                        'Missing': [summary['missing_values'][c] for c in summary['column_names']]
+                    })
+                    st.dataframe(col_info, use_container_width=True)
+                
+                # Step 2: Configure Model
+                st.subheader("Step 2: Configure Model")
+                
+                col_config1, col_config2, col_config3 = st.columns(3)
+                
+                with col_config1:
+                    problem_type = st.selectbox(
+                        "Problem Type",
+                        ["classification", "regression"],
+                        help="Classification for predicting categories, Regression for predicting numbers"
+                    )
+                
+                with col_config2:
+                    target_col = st.selectbox(
+                        "Target Column (what to predict)",
+                        summary['column_names'],
+                        help="The column you want to predict"
+                    )
+                
+                with col_config3:
+                    model_type = st.selectbox(
+                        "Model Type",
+                        ["Random Forest", "SVM", "Logistic Regression"] if problem_type == "classification" 
+                        else ["Random Forest", "SVM", "Linear Regression"]
+                    )
+                
+                # Step 3: Model Hyperparameters
+                st.subheader("Step 3: Hyperparameters")
+                
+                col_hp1, col_hp2, col_hp3 = st.columns(3)
+                
+                with col_hp1:
+                    test_size = st.slider(
+                        "Test Set Size (%)",
+                        min_value=10,
+                        max_value=50,
+                        value=20,
+                        help="Percentage of data to use for testing"
+                    )
+                
+                if model_type in ["Random Forest"]:
+                    with col_hp2:
+                        n_estimators = st.slider(
+                            "Number of Trees",
+                            min_value=10,
+                            max_value=500,
+                            value=100,
+                            step=10
+                        )
+                    with col_hp3:
+                        max_depth = st.slider(
+                            "Max Tree Depth",
+                            min_value=3,
+                            max_value=30,
+                            value=10
+                        )
+                elif model_type == "SVM":
+                    with col_hp2:
+                        kernel = st.selectbox("Kernel", ["rbf", "linear", "poly"], key="svm_kernel")
+                    with col_hp3:
+                        C = st.slider("C (Regularization)", 0.01, 100.0, 1.0, step=0.1, format="%.2f")
+                else:  # Logistic Regression or Linear Regression
+                    with col_hp2:
+                        max_iter = st.slider(
+                            "Max Iterations",
+                            min_value=100,
+                            max_value=5000,
+                            value=1000,
+                            step=100
+                        )
+                    col_hp3.empty()
+                
+                # Step 4: Train Model
+                st.subheader("Step 4: Train & Evaluate")
+                
+                if st.button("🚀 Train Model", use_container_width=True, type="primary"):
+                    with st.spinner(f"Training {model_type} model..."):
+                        # Prepare data with stratification for classification
+                        X_train, X_test, y_train, y_test, X = trainer.prepare_data(
+                            df, 
+                            target_col,
+                            problem_type=problem_type,
+                            test_size=test_size/100
+                        )
+                        
+                        if X_train is not None:
+                            # Prepare hyperparameters
+                            kwargs = {}
+                            if model_type == "Random Forest":
+                                kwargs = {'n_estimators': n_estimators, 'max_depth': max_depth}
+                            elif model_type == "SVM":
+                                kwargs = {'kernel': kernel, 'C': C}
+                            elif model_type in ["Logistic Regression", "Linear Regression"]:
+                                kwargs = {'max_iter': max_iter}
+                            
+                            # Train model
+                            success, y_pred, y_test_actual = trainer.train_model(
+                                X_train, X_test, y_train, y_test,
+                                model_type, problem_type, **kwargs
+                            )
+                            
+                            if success:
+                                # Store model in session state
+                                st.session_state.trained_model = trainer
+                                st.session_state.model_type = model_type
+                                st.session_state.problem_type = problem_type
+                                st.session_state.y_pred = y_pred
+                                st.session_state.y_test = y_test_actual
+                                
+                                st.success("✅ Model trained successfully!")
+                                st.rerun()
+                
+                # Display model metrics if trained
+                if st.session_state.get('trained_model'):
+                    st.subheader("📈 Model Performance")
+                    
+                    trainer = st.session_state['trained_model']
+                    metrics = trainer.metrics
+                    
+                    # Display metrics
+                    if st.session_state.problem_type == 'classification':
+                        col1, col2, col3, col4 = st.columns(4)
+                        with col1:
+                            st.metric("Accuracy", f"{metrics.get('accuracy', 0):.4f}")
+                        with col2:
+                            st.metric("Precision", f"{metrics.get('precision', 0):.4f}")
+                        with col3:
+                            st.metric("Recall", f"{metrics.get('recall', 0):.4f}")
+                        with col4:
+                            st.metric("F1-Score", f"{metrics.get('f1', 0):.4f}")
+                        
+                        # Visualizations
+                        col_viz1, col_viz2 = st.columns(2)
+                        
+                        with col_viz1:
+                            cm_fig = trainer.visualize_confusion_matrix(
+                                st.session_state.y_test, 
+                                st.session_state.y_pred
+                            )
+                            if cm_fig:
+                                st.pyplot(cm_fig)
+                        
+                        with col_viz2:
+                            # Classification report
+                            report = pd.DataFrame(
+                                trainer.metrics
+                            ).to_frame().T
+                            st.write("**Metrics Summary:**")
+                            st.dataframe(report, use_container_width=True)
+                    
+                    else:  # Regression
+                        col1, col2, col3, col4 = st.columns(4)
+                        with col1:
+                            st.metric("R² Score", f"{metrics.get('r2', 0):.4f}")
+                        with col2:
+                            st.metric("RMSE", f"{metrics.get('rmse', 0):.4f}")
+                        with col3:
+                            st.metric("MAE", f"{metrics.get('mae', 0):.4f}")
+                        with col4:
+                            st.metric("MSE", f"{metrics.get('mse', 0):.4f}")
+                        
+                        # Visualizations
+                        pred_fig = trainer.visualize_predictions(
+                            st.session_state.y_test,
+                            st.session_state.y_pred
+                        )
+                        if pred_fig:
+                            st.pyplot(pred_fig)
+                    
+                    # Feature importance if available
+                    fi_fig = trainer.visualize_feature_importance(top_n=10)
+                    if fi_fig:
+                        st.subheader("🔍 Feature Importance")
+                        st.pyplot(fi_fig)
+                
+                # Make predictions on new data
+                if st.session_state.get('trained_model'):
+                    st.markdown("---")
+                    st.subheader("🔮 Make Predictions")
+                    
+                    trainer = st.session_state['trained_model']
+                    
+                    with st.expander("Enter Data for Prediction", expanded=False):
+                        # Create input form for all features
+                        input_data = {}
+                        
+                        cols = st.columns(3)
+                        for idx, feature in enumerate(trainer.feature_names):
+                            with cols[idx % 3]:
+                                if feature in trainer.encoders and feature != 'target':
+                                    # Categorical feature
+                                    options = trainer.encoders[feature].classes_
+                                    input_data[feature] = st.selectbox(
+                                        f"{feature}",
+                                        options,
+                                        key=f"pred_{feature}"
+                                    )
+                                else:
+                                    # Numeric feature
+                                    input_data[feature] = st.number_input(
+                                        f"{feature}",
+                                        key=f"pred_{feature}"
+                                    )
+                        
+                        if st.button("🎯 Predict", use_container_width=True):
+                            success, prediction, confidence = trainer.predict(input_data)
+                            
+                            if success:
+                                col_pred1, col_pred2 = st.columns([3, 1])
+                                with col_pred1:
+                                    st.success(f"**Prediction: {prediction}**")
+                                with col_pred2:
+                                    if confidence:
+                                        st.info(f"Confidence: {confidence:.2%}")
+                            else:
+                                st.error(f"Prediction failed: {prediction}")
+    else:
+        st.info("📭 No datasets downloaded yet. Download a dataset to train a model.")
+    
+    st.markdown("---")
+    
+    # Model Inference Section
+    st.header("🔮 Model Inference & Prediction")
+    
+    st.info("Use trained models to make predictions on new data")
+    
+    # Check if we have trained models or uploaded models
+    inference_col1, inference_col2 = st.columns([2, 1])
+    
+    with inference_col2:
+        inference_option = st.radio(
+            "Model Source",
+            ["Use Trained Model", "Upload Model File"],
+            horizontal=True,
+            label_visibility="collapsed"
+        )
+    
+    inference_trainer = None
+    
+    if inference_option == "Use Trained Model":
+        if st.session_state.get('trained_model'):
+            with inference_col1:
+                st.success("✅ Trained model available")
+            inference_trainer = st.session_state['trained_model']
+        else:
+            with inference_col1:
+                st.warning("⚠️ No trained model available yet")
+            st.info("💡 Train a model first in the 'Machine Learning Model Training' section above")
+    
+    else:  # Upload Model File
+        with inference_col1:
+            st.caption("Upload a previously saved model file")
+        
+        uploaded_model = st.file_uploader(
+            "Choose model file",
+            type=["pkl", "pickle"],
+            help="Select a pickled model file (.pkl or .pickle)"
+        )
+        
+        if uploaded_model is not None:
+            with st.spinner("Loading model..."):
+                try:
+                    inference_trainer = pickle.load(uploaded_model)
+                    st.session_state['inference_trainer'] = inference_trainer
+                    st.success("✅ Model loaded successfully!")
+                except Exception as e:
+                    st.error(f"❌ Error loading model: {str(e)}")
+                    inference_trainer = None
+        elif 'inference_trainer' in st.session_state:
+            inference_trainer = st.session_state['inference_trainer']
+    
+    # Model Inference Interface
+    if inference_trainer:
+        with st.expander("📊 Model Information", expanded=True):
+            info_col1, info_col2, info_col3 = st.columns(3)
+            
+            with info_col1:
+                st.metric("🎯 Model Type", "Classification" if hasattr(inference_trainer, 'metrics') and 'accuracy' in inference_trainer.metrics else "Regression")
+            
+            with info_col2:
+                feature_count = len(inference_trainer.feature_names) if hasattr(inference_trainer, 'feature_names') else 0
+                st.metric("📌 Features", feature_count)
+            
+            with info_col3:
+                metrics = inference_trainer.metrics if hasattr(inference_trainer, 'metrics') else {}
+                if 'accuracy' in metrics:
+                    st.metric("📈 Accuracy", f"{metrics['accuracy']:.4f}")
+                elif 'r2' in metrics:
+                    st.metric("📈 R² Score", f"{metrics['r2']:.4f}")
+                else:
+                    st.metric("📈 Status", "Ready")
+            
+            # Display feature names
+            if hasattr(inference_trainer, 'feature_names'):
+                st.markdown("**Input Features:**")
+                features_df = pd.DataFrame({
+                    'Feature': inference_trainer.feature_names,
+                    'Type': ['Categorical' if (hasattr(inference_trainer, 'encoders') and f in inference_trainer.encoders) else 'Numeric' for f in inference_trainer.feature_names]
+                })
+                st.dataframe(features_df, use_container_width=True, hide_index=True)
+        
+        # Prediction Interface
+        st.subheader("🎯 Make Predictions")
+        
+        # Toggle between input methods
+        input_method = st.radio(
+            "Input Method",
+            ["📝 Manual Input", "📋 Paste CSV String"],
+            horizontal=True,
+            label_visibility="collapsed"
+        )
+        
+        if input_method == "📋 Paste CSV String":
+            # CSV String Input
+            st.markdown("**Paste data as comma-separated values (CSV format):**")
+            csv_string = st.text_area(
+                "CSV Input",
+                placeholder="5729,164,3,-3.71378,40.3518,0,3413,17,177.47,290.21,5.74,16.65,0,0,0,20251211,1765521373,4",
+                height=60,
+                label_visibility="collapsed",
+                help="Paste a single row of comma-separated values matching the feature order"
+            )
+            
+            if st.button("🚀 Predict from CSV", use_container_width=True, type="primary"):
+                try:
+                    # Parse CSV string
+                    values = [v.strip() for v in csv_string.split(',')]
+                    
+                    if len(values) != len(inference_trainer.feature_names):
+                        st.error(f"❌ Expected {len(inference_trainer.feature_names)} values, got {len(values)}")
+                        st.info(f"Expected features in order: {', '.join(inference_trainer.feature_names)}")
+                    else:
+                        # Create input data dictionary
+                        input_data = {}
+                        for idx, feature in enumerate(inference_trainer.feature_names):
+                            try:
+                                # Try to convert to appropriate type
+                                value = values[idx]
+                                if hasattr(inference_trainer, 'encoders') and feature in inference_trainer.encoders:
+                                    # Keep as string for encoding
+                                    input_data[feature] = value
+                                else:
+                                    # Convert to numeric
+                                    if '.' in value:
+                                        input_data[feature] = float(value)
+                                    else:
+                                        input_data[feature] = int(value)
+                            except ValueError:
+                                st.error(f"❌ Could not parse value '{value}' for feature '{feature}'")
+                                st.stop()
+                        
+                        with st.spinner("🔄 Making prediction..."):
+                            success, prediction, confidence = inference_trainer.predict(input_data)
+                            
+                            if success:
+                                st.markdown("---")
+                                
+                                # Display prediction result
+                                result_col1, result_col2, result_col3 = st.columns([2, 1, 1])
+                                
+                                with result_col1:
+                                    st.success(f"### ✅ Prediction Result")
+                                    st.markdown(f"**Predicted Value:** `{prediction}`")
+                                
+                                with result_col2:
+                                    if confidence:
+                                        confidence_pct = confidence * 100
+                                        if confidence_pct >= 80:
+                                            st.success(f"**Confidence**\n{confidence_pct:.1f}%")
+                                        elif confidence_pct >= 60:
+                                            st.warning(f"**Confidence**\n{confidence_pct:.1f}%")
+                                        else:
+                                            st.error(f"**Confidence**\n{confidence_pct:.1f}%")
+                                
+                                with result_col3:
+                                    st.info(f"**Status**\nSuccess")
+                                
+                                # Display input summary
+                                st.markdown("**Input Summary:**")
+                                input_df = pd.DataFrame({
+                                    'Feature': list(input_data.keys()),
+                                    'Value': list(input_data.values())
+                                })
+                                st.dataframe(input_df, use_container_width=True, hide_index=True)
+                                
+                                # Download prediction as CSV
+                                output_data = {**input_data, 'prediction': prediction}
+                                if confidence:
+                                    output_data['confidence'] = confidence
+                                
+                                csv_output = pd.DataFrame([output_data]).to_csv(index=False)
+                                st.download_button(
+                                    label="📥 Download Prediction (CSV)",
+                                    data=csv_output,
+                                    file_name="prediction.csv",
+                                    mime="text/csv",
+                                    use_container_width=True
+                                )
+                            else:
+                                st.error(f"❌ Prediction failed: {prediction}")
+                
+                except Exception as e:
+                    st.error(f"❌ Error parsing CSV: {str(e)}")
+        
+        else:
+            # Manual Input Form
+            with st.form("prediction_form", clear_on_submit=False):
+                st.markdown("**Enter data for prediction:**")
+                
+                input_data = {}
+                cols = st.columns(3)
+                
+                # Create input fields for each feature
+                for idx, feature in enumerate(inference_trainer.feature_names):
+                    with cols[idx % 3]:
+                        if hasattr(inference_trainer, 'encoders') and feature in inference_trainer.encoders:
+                            # Categorical feature with dropdown
+                            options = inference_trainer.encoders[feature].classes_
+                            input_data[feature] = st.selectbox(
+                                f"📌 {feature}",
+                                options,
+                                key=f"inference_pred_{feature}"
+                            )
+                        else:
+                            # Numeric feature with number input
+                            input_data[feature] = st.number_input(
+                                f"🔢 {feature}",
+                                key=f"inference_pred_{feature}"
+                            )
+                
+                st.markdown("---")
+                predict_button = st.form_submit_button("🚀 Predict", use_container_width=True, type="primary")
+                
+                if predict_button:
+                    with st.spinner("🔄 Making prediction..."):
+                        success, prediction, confidence = inference_trainer.predict(input_data)
+                        
+                        if success:
+                            st.markdown("---")
+                            
+                            # Display prediction result
+                            result_col1, result_col2, result_col3 = st.columns([2, 1, 1])
+                            
+                            with result_col1:
+                                st.success(f"### ✅ Prediction Result")
+                                st.markdown(f"**Predicted Value:** `{prediction}`")
+                            
+                            with result_col2:
+                                if confidence:
+                                    confidence_pct = confidence * 100
+                                    if confidence_pct >= 80:
+                                        st.success(f"**Confidence**\n{confidence_pct:.1f}%")
+                                    elif confidence_pct >= 60:
+                                        st.warning(f"**Confidence**\n{confidence_pct:.1f}%")
+                                    else:
+                                        st.error(f"**Confidence**\n{confidence_pct:.1f}%")
+                            
+                            with result_col3:
+                                st.info(f"**Status**\nSuccess")
+                            
+                            # Display input summary
+                            st.markdown("**Input Summary:**")
+                            input_df = pd.DataFrame({
+                                'Feature': list(input_data.keys()),
+                                'Value': list(input_data.values())
+                            })
+                            st.dataframe(input_df, use_container_width=True, hide_index=True)
+                            
+                            # Download prediction as CSV
+                            output_data = {**input_data, 'prediction': prediction}
+                            if confidence:
+                                output_data['confidence'] = confidence
+                            
+                            csv_output = pd.DataFrame([output_data]).to_csv(index=False)
+                            col_export1, col_export2 = st.columns([1, 1])
+                            with col_export1:
+                                st.download_button(
+                                    label="📥 Download Prediction (CSV)",
+                                    data=csv_output,
+                                    file_name="prediction.csv",
+                                    mime="text/csv",
+                                    use_container_width=True
+                                )
+                            with col_export2:
+                                st.button(
+                                    label="🔄 Make Another Prediction",
+                                    use_container_width=True,
+                                    key="another_pred"
+                                )
+                        else:
+                            st.error(f"❌ Prediction failed: {prediction}")
+        
+        # Batch Prediction Section
+        st.markdown("---")
+        st.subheader("📊 Batch Prediction")
+        
+        with st.expander("Upload CSV for batch predictions", expanded=False):
+            st.markdown("Upload a CSV file with multiple samples for bulk prediction")
+            
+            batch_file = st.file_uploader(
+                "Choose CSV file",
+                type=["csv"],
+                key="batch_prediction_file",
+                help="CSV file with columns matching the model's input features"
+            )
+            
+            if batch_file is not None:
+                batch_df = pd.read_csv(batch_file)
+                
+                st.markdown(f"**Uploaded file:** {batch_file.name} ({len(batch_df)} rows)")
+                
+                with st.expander("Preview data", expanded=False):
+                    st.dataframe(batch_df.head(10), use_container_width=True)
+                
+                if st.button("🚀 Run Batch Prediction", use_container_width=True):
+                    with st.spinner("Processing batch predictions..."):
+                        progress_bar = st.progress(0)
+                        predictions_list = []
+                        
+                        for idx, row in enumerate(batch_df.iterrows()):
+                            row_data = row[1].to_dict()
+                            success, pred, conf = inference_trainer.predict(row_data)
+                            
+                            if success:
+                                predictions_list.append({
+                                    'prediction': pred,
+                                    'confidence': conf if conf else None
+                                })
+                            else:
+                                predictions_list.append({
+                                    'prediction': 'ERROR',
+                                    'confidence': None
+                                })
+                            
+                            progress_bar.progress((idx + 1) / len(batch_df))
+                        
+                        # Create results dataframe
+                        results_df = pd.concat([
+                            batch_df.reset_index(drop=True),
+                            pd.DataFrame(predictions_list)
+                        ], axis=1)
+                        
+                        st.success("✅ Batch prediction complete!")
+                        
+                        # Display results
+                        st.markdown("**Results:**")
+                        st.dataframe(results_df, use_container_width=True)
+                        
+                        # Download results
+                        csv_results = results_df.to_csv(index=False)
+                        st.download_button(
+                            label="📥 Download Results (CSV)",
+                            data=csv_results,
+                            file_name="batch_predictions.csv",
+                            mime="text/csv",
+                            use_container_width=True
+                        )
+    
+    else:
+        st.info("💡 No model available. Train a model or upload a saved model file to make predictions.")
     
     st.markdown("---")
     

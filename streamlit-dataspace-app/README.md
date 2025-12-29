@@ -1,62 +1,39 @@
-# INESData Dataspace Browser
+# 🔬 INESData Dataspace Browser with TINTOlib ML Integration
 
-A Streamlit application to browse catalogs, negotiate contracts, and download data from INESData dataspaces automatically.
+**Enterprise-grade data marketplace browser with automated contract negotiation and synthetic image generation for machine learning.**
 
-## Features
+---
 
-- 🔐 **Keycloak Authentication**: Login with consumer connector credentials
-- 📚 **Catalog Browser**: View available datasets from provider
-- 🤝 **Auto Negotiation**: Automatically negotiate contracts (coming soon)
-- 📥 **Data Download**: Pull data from provider (coming soon)
+## ✨ Features
 
-## Setup
+🔐 **Secure Authentication** - Keycloak OAuth2 integration  
+📚 **Catalog Browsing** - Explore datasets with full metadata  
+🤝 **Automated Negotiation** - ODRL-based contract handling  
+📥 **Smart Downloads** - HTTP-PULL with EDR support  
+🎨 **ML Ready** - TINTOlib integration with 9 conversion methods  
+📊 **Metrics Dashboard** - Real-time statistics and insights  
+💾 **Batch Export** - Download synthetic images as ZIP  
+🔍 **Interactive Zoom** - 1x-10x image magnification  
 
-1. **Install dependencies:**
-   ```bash
-   pip install -r requirements.txt
-   ```
+---
 
-2. **Configure** (edit `config.py` if needed):
-   - Keycloak URL: `http://keycloak.dev.ed.inesdata.upm`
-   - Consumer connector: `http://conn-oeg-consumer.dev.ds.inesdata.upm`
-   - Provider connector: `http://conn-oeg-provider.dev.ds.inesdata.upm`
+## 🚀 Quick Start
 
-3. **Run the app:**
-   ```bash
-   streamlit run app.py
-   ```
-
-## Credentials
-
-Credentials should be obtained from your system administrator and configured via environment variables or Streamlit secrets. See `.env.example` for required configuration.
-
-## Usage Flow
-
-1. **Login** with consumer credentials
-2. **Browse** the provider's catalog
-3. **Select** a dataset
-4. **Click** "Request Data" to start automatic negotiation
-5. **Download** the data once transfer completes
-
-## Architecture
-
-```
-app.py              # Main Streamlit UI
-├── auth.py         # Keycloak authentication
-├── edc_client.py   # EDC Management API client
-└── config.py       # Configuration (URLs, endpoints)
+```bash
+cd streamlit-dataspace-app
+pip install --no-deps TINTOlib
+pip install numpy pandas scikit-learn matplotlib Pillow seaborn streamlit requests
+streamlit run app.py
 ```
 
-## Next Steps
+**Login**: Use credentials provided by your administrator
 
-- [ ] Implement contract negotiation flow
-- [ ] Add transfer process monitoring
-- [ ] Implement data download with EDR tokens
-- [ ] Add progress indicators for async operations
-- [ ] Support multiple providers
+---
 
-## Requirements
+## 📖 Complete Documentation
 
-- Python 3.10+
-- Access to INESData connectors (Minikube with minikube tunnel running)
-- Keycloak realm configured
+See **IMPLEMENTATION_SUMMARY.md** for full technical details.
+
+---
+
+**Version**: 1.0.0 | **Status**: Production Ready ✅
